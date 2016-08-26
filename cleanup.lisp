@@ -1,3 +1,24 @@
+;;;; Google Diff, Match and Patch library by Neil Fraser
+;;;; Ported into Common Lisp by Boris Smilga, with modifications
+;;;; Original project: see http://code.google.com/p/google-diff-match-patch/
+
+;; Copyright 2006 Google Inc.
+;; Copyright 2016 Boris Smilga
+;;
+;; Licensed under the Apache License, Version 2.0 (the "License");
+;; you may not use this file except in compliance with the License.
+;; You may obtain a copy of the License at
+;;
+;;   http://www.apache.org/licenses/LICENSE-2.0
+;;
+;; Unless required by applicable law or agreed to in writing, software
+;; distributed under the License is distributed on an "AS IS" BASIS,
+;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;; See the License for the specific language governing permissions and
+;; limitations under the License.
+
+;;;; Cleanup functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (in-package #:diff-match-patch)
 
 (declaim (optimize (speed 3) (safety 0)))
@@ -118,7 +139,7 @@
                  (dlet* (((lookback equality) prev-equality))
                    (revappend* lookback `(:= ,equality) diffs))))
           (if equality
-              (let ((prev-equality (pop equalities+))) 
+              (let ((prev-equality (pop equalities+)))
                 (setq diffs (revappend* lookback
                               `(:- ,equality) `(:+ ,equality) rest)
                       equalities equalities+
@@ -134,7 +155,7 @@
                                         &key (start 0) (end (length str)))
   "Compute a score from 6 to 0 determining to which extent the position POS
    in the portion of STR between START and END is a logical boundary."
-  (macrolet ((counting-newlines ((n &rest steps) &body clauses) 
+  (macrolet ((counting-newlines ((n &rest steps) &body clauses)
                `(iter (for c :in-string str ,@steps)
                   (while (newline-char-p c))
                   (if (eq c #\Newline) (count 1 :into ,n))

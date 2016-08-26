@@ -1,3 +1,24 @@
+;;;; Google Diff, Match and Patch library by Neil Fraser
+;;;; Ported into Common Lisp by Boris Smilga, with modifications
+;;;; Original project: see http://code.google.com/p/google-diff-match-patch/
+
+;; Copyright 2006 Google Inc.
+;; Copyright 2016 Boris Smilga
+;;
+;; Licensed under the Apache License, Version 2.0 (the "License");
+;; you may not use this file except in compliance with the License.
+;; You may obtain a copy of the License at
+;;
+;;   http://www.apache.org/licenses/LICENSE-2.0
+;;
+;; Unless required by applicable law or agreed to in writing, software
+;; distributed under the License is distributed on an "AS IS" BASIS,
+;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;; See the License for the specific language governing permissions and
+;; limitations under the License.
+
+;;;; Patch functions ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (in-package #:diff-match-patch)
 
 (declaim (optimize (speed 3) (safety 0)))
@@ -137,7 +158,7 @@
     (list (mapc (lambda (hunk) (print-patch hunk out)) patch))
     (hunk (with-slots (diffs start-a start-b length-a length-b) patch
             (when (not (eq (diff-seq-type diffs) 'string))
-              (error "Non-string patch in PRINT-PATCH")) 
+              (error "Non-string patch in PRINT-PATCH"))
             (format out "@@ -~? +~? @@~%"
               #1="~[~A,0~;~*~A~:;~*~A,~3:*~A~]"
               (list length-a start-a (1+ start-a))
@@ -264,7 +285,7 @@
     (iter :split
           (with type := (diff-seq-type diffs))
           (with big-diffs := diffs) (with lcontext := '())
-          (with start-a* := start-a) (with start-b* := start-b) 
+          (with start-a* := start-a) (with start-b* := start-b)
           (until (endp big-diffs))
           (iter (with l* := (length lcontext))
                 (with length-a* := l*) (with length-b* := l*)

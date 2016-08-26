@@ -1,3 +1,24 @@
+;;;; Google Diff, Match and Patch library by Neil Fraser
+;;;; Ported into Common Lisp by Boris Smilga, with modifications
+;;;; Original project: see http://code.google.com/p/google-diff-match-patch/
+
+;; Copyright 2006 Google Inc.
+;; Copyright 2016 Boris Smilga
+;;
+;; Licensed under the Apache License, Version 2.0 (the "License");
+;; you may not use this file except in compliance with the License.
+;; You may obtain a copy of the License at
+;;
+;;   http://www.apache.org/licenses/LICENSE-2.0
+;;
+;; Unless required by applicable law or agreed to in writing, software
+;; distributed under the License is distributed on an "AS IS" BASIS,
+;; WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+;; See the License for the specific language governing permissions and
+;; limitations under the License.
+
+;;;; Test harness ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (cl:defpackage #:diff-match-patch-test
   (:nicknames #:dmp-test)
   (:use #:cl #:fiveam)
@@ -714,7 +735,7 @@ The") (:+ "'d our")
                  (dmp:*match-threshold* match-th)
                  (dmp:*patch-delete-threshold* del-th)
                  (dmp:*max-bits* 32)
-                 (dmp:*patch-margin* 4)) 
+                 (dmp:*patch-margin* 4))
              (multiple-value-list (dmp:apply-patch p c :test #'char=)))))
     (is-every equalp
       ;; Null case
