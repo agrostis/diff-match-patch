@@ -31,17 +31,19 @@
            ;; patch.lisp
            #:hunk #:hunk-diffs #:hunk-start-a #:hunk-start-b
            #:hunk-length-a #:hunk-length-b
-           #:make-patch #:apply-patch #:print-patch #:read-patch))
+           #:make-patch #:apply-patch
+           #:write-chars-patch #:read-chars-patch))
 
 ;;;; Global parameters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (in-package #:diff-match-patch)
 
 (defparameter *diff-timeout* 5.0
-  "Number of seconds to map a diff before giving up (NIL for infinity).")
+  "Number of seconds to refine a diff before giving up (NIL for infinity).")
 
 (defparameter *diff-edit-cost* 4
-  "Cost of an empty edit operation in terms of edit characters.")
+  "Cost of an empty edit operation in terms of edit characters. Used to
+   detect operationally trivial equalities when cleaning up diff lists.")
 
 (defparameter *diff-check-lines-length* 100
   "When a diff is computed between strings, how long should they be to
@@ -60,7 +62,7 @@
 (defparameter *patch-delete-threshold* 0.5
   "When deleting a large block of text (over ~64 characters), how close do
    the contents have to be to match the expected contents. (0.0 = perfection,
-   1.0 = very loose).  Note that Match_Threshold controls how closely the
+   1.0 = very loose).  Note that *MATCH-THRESHOLD* controls how closely the
    end points of a delete need to match.")
 
 (defparameter *patch-margin* 4
@@ -70,4 +72,4 @@
   "The number of bits in an int, used to limit the width of match patterns
    when applying an inexact patch. Common Lisp having bigints allows to set
    this value to NIL (meaning unlimited width), but keeping it as it is
-   gives a slight optimization by using fixints only.")
+   optimizes performance by using fixints only.")

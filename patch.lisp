@@ -151,14 +151,14 @@
                 (when hunk (collect hunk))
                 (until (endp (setq diffs rest))))))))
 
-(defun print-patch (patch &optional (out *standard-output*))
-  "Print the formatted representation of the given PATCH (a hunk or list of
-   hunks) to the stream OUT."
+(defun write-chars-patch (patch &optional (out *standard-output*))
+  "Write the formatted representation of the given PATCH (a hunk or list of
+   hunks, encoding a difference of character strings) to the stream OUT."
   (etypecase patch
-    (list (mapc (lambda (hunk) (print-patch hunk out)) patch))
+    (list (mapc (lambda (hunk) (write-chars-patch hunk out)) patch))
     (hunk (with-slots (diffs start-a start-b length-a length-b) patch
             (when (not (eq (diff-seq-type diffs) 'string))
-              (error "Non-string patch in PRINT-PATCH"))
+              (error "Non-string patch in WRITE-CHARS-PATCH"))
             (format out "@@ -~? +~? @@~%"
               #1="~[~A,0~;~*~A~:;~*~A,~3:*~A~]"
               (list length-a start-a (1+ start-a))
@@ -169,9 +169,9 @@
                   (iter (for c :in-string x) (write-char-urlencode c out))
                   (terpri out))))))
 
-(defun read-patch (in)
-  "Read a formatted representation of patch from the stream IN and return it
-   as a list of hunks."
+(defun read-chars-patch (&optional (in *standard-input*))
+  "Read a formatted representation of patch encoding a difference of
+   character strings from the stream IN and return it as a list of hunks."
   (iter (for c0 := (peek-char nil in nil))
         (with hunk := nil) (with diffs := '()) (with op)
         (with header-re :=
@@ -370,7 +370,7 @@
                   (dlet* (((values pfx sfx) (split-at seq start end* t)))
                     (setq seq (join* pfx (diff-destination diffs) sfx)))
                   (let ((diffs* (diff orig orig* :test test)))
-                    (if (and (> l *max-bits*)
+                    (if (and (or (not *max-bits*) (> l *max-bits*))
                              (> (/ (levenshtein diffs*) l)
                                 *patch-delete-threshold*))
                         (setq applicable nil)

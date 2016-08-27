@@ -1,0 +1,158 @@
+This is a Common Lisp port of Neil Fraser's Diff, Match and Patch
+library (http://code.google.com/p/google-diff-match-patch/).
+
+It implements operations required for synchronizing sequences of Lisp
+objects, in particular plain text represented as character strings.  The
+operations fall into three subtasks:
+
+1. Diff: Compare two sequences and return a list of differences (edit
+   operations).
+
+Diff implements Gene Myers's 1986 algorithm with complexity O(N * D),
+where N is the sum of lengths of the two sequences, and D is the size
+of the shortest edit script.
+
+2. Match: Given a search sequence, find a (possibly fuzzily) matching
+   subsequence of another sequence near a given position.
+
+Match implements the Bitap algorithm, as described by Wu and Manber (1991).
+Its broad idea is to search the space around the position first for an exact
+occurence of the search pattern, then for a subsequence which matches the
+pattern with one error, then with two errors, etc. If two or more matches
+are found, they are compared by a score which trades off proximity and
+number of errors.
+
+3. Patch: Create a list of contextualized edit operation groups (“hunks”)
+   corresponding to a diff of two sequences A and B; apply it to a third
+   sequence A´ in order to produce an equivalent edit B´.
+
+A hunk recording the changes of a subsequence S of A can be applied to a
+subsequence S´ of A´ both when S and S´ are equal, and when S´ is a fuzzy
+match of S in A´ near the position indicated by the hunk, and the badness of
+the match (computed as the Levenshtein distance between S and S´ divided by
+the length of S) is reasonably low.
+
+
+The library defines the package DIFF-MATCH-PATH (nicknamed DMP), which
+exports the following names:
+
+{function} DIFF A B &KEY (TEST #'EQL)
+
+   Find the differences between two sequences A and B of elements comparable
+   under the function TEST. Return a list of edit operations of the form (OP
+   X), where OP is one of the keywords :+ :- :=, and X is a subsequence of A
+   or B.
+
+{parameter} *DIFF-TIMEOUT*
+
+   Number of seconds to refine a diff before giving up (NIL for infinity).
+   Initial value = 5.0.
+
+{parameter} *DIFF-EDIT-COST*
+
+   Cost of an empty edit operation in terms of edit characters. Used to
+   detect operationally trivial equalities when cleaning up diff lists.
+   Initial value = 4.
+
+{parameter} *DIFF-CHECK-LINES-LENGTH*
+   When a diff is computed between strings, how long should they be to
+   to qualify for line-level-diff optimization. On strings whose length
+   is greater than this value, a line-level diff is run first to identify
+   the changed areas. NIL = don't optimize. Initial value = 1000.
+
+{function} MAPDIFF FN DIFFS
+
+   Return a copy of edit operation list DIFFS in which the content of every
+   operation has been replaced by its image under FN.
+
+{function} DIFF-ORIGIN DIFFS
+
+   Given a difference list, rebuild the first of the compared sequences.
+
+{function} DIFF-DESTINATION DIFFS
+
+   Given a difference list, rebuild the second of the compared sequences.
+
+{function} TRANSLATE-POSITION DIFFS POSITION
+
+   Given the difference list DIFFS between two sequences and a POSITION in
+   the first sequence, return the equivalent position in the second sequence.
+
+{function} LEVENSHTEIN DIFFS
+
+   Given the difference list DIFFS between two sequences, return the
+   corresponding Levenshtein distance.
+
+{function} INDEX-ABBREVIATOR
+
+   Return two unary functions: one to abbreviate things to integers, the
+   other to restore them from integer abbreviations.
+
+{function} MATCH SPACE PATTERN POSITION &KEY (TEST #'EQL)
+
+   Locate a subsequence most closely resembling PATTERN in SPACE near
+   POSITION.
+
+{parameter} *MATCH-THRESHOLD*
+
+   At what point is no match declared (0.0 = perfection, 1.0 = very loose).
+   Initial value = 0.5.
+
+{parameter} *MATCH-DISTANCE*
+
+   How far to search for a match (0 = exact location, 1000+ = broad match).
+   A match this many characters away from the expected location will add
+   1.0 to the error score (0.0 is a perfect match). Initial value = 1000.
+
+{function} MAKE-PATCH A B &KEY (TEST #'EQL)
+           MAKE-PATCH &KEY DIFFS (TEST #'EQL)
+
+   When called with two seuqences A and B, compute the diff between them and
+   convert it into a list of hunk objects.  Alternatively, the diff can be
+   passed explicitly by keyword argument, and sequences reconstructed from
+   it.
+
+{function} WRITE-CHARS-PATCH PATCH &OPTIONAL (OUT *STANDARD-OUTPUT*)
+
+   Write the formatted representation of the given PATCH (a hunk or list of
+   hunks, encoding a difference of character strings) to the stream OUT.
+
+{function} READ-CHARS-PATCH &optional (IN *STANDARD-INPUT*)
+
+   Read a formatted representation of patch encoding a difference of
+   character strings from the stream IN and return it as a list of hunks.
+
+{class} HUNK
+{accessor} HUNK-DIFFS HUNK
+{accessor} HUNK-START-A HUNK
+{accessor} HUNK-START-B HUNK
+{accessor} HUNK-LENGTH-A HUNK
+{accessor} HUNK-LENGTH-B HUNK
+
+   A wrapper for an edit or group of adjacent edits.
+
+{function} APPLY-PATCH PATCH SEQ
+               &KEY (PADDING #'DMP::TRIVIAL-PADDING) (TEST #'EQL)
+
+   Apply PATCH (a list of hunks) to the sequence SEQ.  Return two values:
+   (1) SEQ, or its modified copy; and (2) a list of booleans, of the same
+   length as PATCH, indicating for every hunk if it could be applied.
+
+{parameter} *PATCH-DELETE-THRESHOLD*
+
+   When deleting a large block of text (over ~64 characters), how close do
+   the contents have to be to match the expected contents. (0.0 = perfection,
+   1.0 = very loose).  Note that *MATCH-THRESHOLD* controls how closely the
+   end points of a delete need to match. Initial value = 0.5.
+
+{parameter} *PATCH-MARGIN*
+
+  Chunk size for context length. Initial value = 4.
+
+{parameter} *MAX-BITS*
+
+   The number of bits in an int, used to limit the width of match patterns
+   when applying an inexact patch.Initial value = (INTEGER-LENGTH
+   MOST-POSITIVE-FIXNUM). Common Lisp having bigints allows to set this
+   value to NIL (meaning unlimited width), but keeping it as it is optimizes
+   performance by using fixints only.

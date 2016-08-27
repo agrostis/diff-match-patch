@@ -24,7 +24,8 @@
 (declaim (optimize (speed 3) (safety 0)))
 
 (defun match (space pattern position &key (test #'eql))
-  "Locate the best instance of PATTERN in SPACE near POSITION."
+  "Locate a subsequence most closely resembling PATTERN in SPACE near
+   POSITION."
   (cond ((equal pattern space) 0)
         ((empty space) nil)
         (t (let* ((space* (coerce space 'vector))

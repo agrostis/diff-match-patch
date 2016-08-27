@@ -603,9 +603,9 @@ The") (:+ "'d our")
                '((:= "Th") (:- "e") (:+ "at") (:= " quick brown fox jumps. "))
                0 0 27 28))))
 
-(test print-patch
+(test write-chars-patch
   (is (equal (with-output-to-string (s)
-               (dmp:print-patch
+               (dmp:write-chars-patch
                  (make-instance 'dmp:hunk
                    :start-a 20 :start-b 21 :length-a 18 :length-b 17
                    :diffs '((:= "jump") (:- "s") (:+ "ed") (:= " over ")
@@ -613,9 +613,9 @@ The") (:+ "'d our")
                  s))
              #?"@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n")))
 
-(test read-patch
+(test read-chars-patch
   (flet ((mkpatch (str)
-           (with-input-from-string (in str) (dmp:read-patch in)))
+           (with-input-from-string (in str) (dmp:read-chars-patch in)))
          (hunkp0 (patch &rest args)
            (apply #'hunkp (car patch) args)))
     (is (equal (mkpatch "") '()))
@@ -631,10 +631,10 @@ The") (:+ "'d our")
                 '((:+ "abc")) 0 0 0 3))
     (signals simple-error (mkpatch #?"Bad\nPatch\n"))))
 
-(test read-print-patch
+(test read-write-chars-patch
   (flet ((rw (str)
-           (let ((p (with-input-from-string (in str) (dmp:read-patch in))))
-             (with-output-to-string (out) (dmp:print-patch p out)))))
+           (let ((p (with-input-from-string (in str) (dmp:read-chars-patch in))))
+             (with-output-to-string (out) (dmp:write-chars-patch p out)))))
     (is (equal #1=#?"@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n"
                (rw #1#)))
     (is (equal #2=#?"@@ -1,9 +1,9 @@\n-f\n+F\n oo+fooba\n@@ -7,9 +7,9 @@\n obar\n-,\n+.\n tes\n"
@@ -644,7 +644,7 @@ The") (:+ "'d our")
   (flet ((mkp (&rest args)
            (let ((p (let ((dmp:*patch-margin* 4))
                       (apply #'dmp:make-patch args))))
-             (with-output-to-string (out) (dmp:print-patch p out))))
+             (with-output-to-string (out) (dmp:write-chars-patch p out))))
          (str-mul (str factor)
            (loop for n :from factor :above 0
                  for str* := str :then (concatenate 'string str* str)
@@ -685,7 +685,7 @@ The") (:+ "'d our")
            (let ((p (let ((dmp:*patch-margin* 4))
                       (dmp:make-patch a b :test #'char=))))
              (with-output-to-string (out)
-               (dmp:print-patch
+               (dmp:write-chars-patch
                  (dmp::add-padding p (dmp::trivial-padding p 4))
                  out)))))
     ;; Both edges full
@@ -705,9 +705,9 @@ The") (:+ "'d our")
              (let ((p (dmp:make-patch a b :test #'char=)))
                (values
                  (with-output-to-string (out)
-                   (dmp:print-patch (dmp::split-big-hunks p) out))
+                   (dmp:write-chars-patch (dmp::split-big-hunks p) out))
                  (with-output-to-string (out)
-                   (dmp:print-patch p out)))))))
+                   (dmp:write-chars-patch p out)))))))
     (is (equal
           (mkp+sbh "abcdefghijklmnopqrstuvwxyz01234567890"
                    "XabXcdXefXghXijXklXmnXopXqrXstXuvXwxXyzX01X23X45X67X89X0")
@@ -777,7 +777,7 @@ The") (:+ "'d our")
            :match-d 0)
        '("ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------1234567YYYYYYYYYY890"
          (nil t))))
-    (flet ((pstr (p) (with-output-to-string (out) (dmp:print-patch p out))))
+    (flet ((pstr (p) (with-output-to-string (out) (dmp:write-chars-patch p out))))
       ;; No side effects
       (let* ((p (mkp "" "test"))
              (before (pstr p))
