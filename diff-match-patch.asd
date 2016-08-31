@@ -30,7 +30,8 @@
   :author "Neil Fraser; ported by Boris Smilga"
   :maintainer "Boris Smilga <boris.smilga@gmail.com>"
   :license "Apache 2.0"
-  :depends-on (#:diff-match-patch #:fiveam #:cl-interpol)
+  :depends-on (#:diff-match-patch #:fiveam
+               (:version #:cl-interpol "0.2.6"))
   :components
     ((:module #:src
         :serial t

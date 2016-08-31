@@ -283,8 +283,19 @@
                   (t1 (dmp::get-internal-seconds)))
              (values (- t1 t0) d))))
     (let ((dmp:*diff-timeout* 0.1)
-          (a (str-expn #?"`Twas brillig, and the slithy toves\nDid gyre and gimble in the wabe:\nAll mimsy were the borogoves,\nAnd the mome raths outgrabe.\n" 10))
-          (b (str-expn #?"I am the very model of a modern major general,\nI've information vegetable, animal, and mineral,\nI know the kings of England, and I quote the fights historical,\nFrom Marathon to Waterloo, in order categorical.\n" 10)))
+          (a (str-expn
+               #?"`Twas brillig, and the slithy toves\n\
+                  Did gyre and gimble in the wabe:\n\
+                  All mimsy were the borogoves,\n\
+                  And the mome raths outgrabe.\n"
+               10))
+          (b (str-expn
+               #?"I am the very model of a modern major general,\n\
+                  I've information vegetable, animal, and mineral,\n\
+                  I know the kings of England, and I quote \
+                      the fights historical,\n\
+                  From Marathon to Waterloo, in order categorical.\n"
+               10)))
       (is (< dmp:*diff-timeout*
              (timed-diff a b #'char=)
              (* dmp:*diff-timeout* 3))))))
@@ -293,87 +304,68 @@
   ;; A diff between two versions of King Lear's soliloquy (1st and 2nd
   ;; Quarto).  We take CHAR-EQUAL for test function to gloss over uc/lc
   ;; differences, most of which are due to changes in line breaks.
-
-  (multiple-value-bind (q1 q2 d) (values
-
-"Blow wind & cracke your cheekes, rage, blow
-You caterickes, & Hircanios spout til you haue drencht,
-The steeples drown'd the cockes, you sulpherous and
-Thought executing fires, vaunt-currers to
-Oke-cleauing thunderboults, singe my white head,
-And thou all shaking thunder, smite flat
-The thicke Rotunditie of the world, cracke natures
-Mold, all Germains spill at once that make
-Ingratefull man.
-"
-
-"Blow windes, & crack your cheeks; Rage, blow
-You Cataracts, and Hyrricano's spout,
-Till you haue drench'd our Steeples, drown the Cockes.
-You Sulph'rous and Thought-executing Fires,
-Vaunt-curriors of Oake-cleauing Thunder-bolts,
-Sindge my white head. And thou all-shaking Thunder,
-Strike flat the thicke Rotundity o'th'world,
-Cracke Natures moulds, all germaines spill at once
-That makes ingratefull Man.
-"
-
-'((:= "Blow wind") (:+ "es,")
-  (:= " & crack") (:- "e")
-  (:= " your cheek") (:- "e") (:= "s") (:- ",") (:+ ";")
-  ;; ----------------
-  (:= " rage, blow
-You cat") (:- "e") (:+ "a") (:= "r") (:- "i") (:+ "a") (:= "c") (:- "ke") (:+ "t") (:= "s, ")
-  (:- "&") (:+ "and")
-  (:= " H") (:- "i") (:+ "yr") (:= "r") (:+ "i") (:= "can") (:- "i") (:= "o") (:+ "'")
-  (:= "s spout") (:- " ") (:+ ",
-")
-  ;; ----------------
-  (:= "ti") (:+ "l") (:= "l you haue drench") (:- "t,
-The") (:+ "'d our")
-  (:= " steeples") (:+ ",")
-  (:= " drown") (:- "'d")
-  (:= " the cockes") (:- ", ") (:+ ".
-")
-  ;; ----------------
-  (:= "you sulph") (:- "e") (:+ "'") (:= "rous and") (:- "
-") (:+ " ")
-  (:= "Thought") (:- " ") (:+ "-")
-  (:= "executing fires,") (:- " ") (:+ "
-")
-  ;; ----------------
-  (:= "vaunt-curr") (:- "e") (:+ "io") (:= "rs ") (:- "t") (:= "o") (:- "
-") (:+ "f ")
-  (:= "O") (:+ "a") (:= "ke-cleauing thunder") (:+ "-")
-  ;; ----------------
-  (:= "bo") (:- "u") (:= "lts,") (:- " ") (:+ "
-")
-  (:= "sin") (:+ "d") (:= "ge my white head") (:- ",
-") (:+ ". ")
-  ;; ----------------
-  (:= "And thou all") (:- " ") (:+ "-")
-  (:= "shaking thunder,") (:- " ") (:+ "
-")
-  ;; ----------------
-  (:= "s") (:- "mi") (:= "t") (:+ "rik") (:= "e flat") (:- "
-") (:+ " ")
-  (:= "The thicke Rotundit") (:- "ie") (:+ "y")
-  (:= " o") (:- "f ") (:+ "'") (:= "th") (:- "e ") (:+ "'") (:= "world,") (:- " ") (:+ "
-")
-  ;; ----------------
-  (:= "cracke natures") (:- "
-") (:+ " ")
-  (:= "Mo") (:+ "u") (:= "ld") (:+ "s")
-  (:= ", all Germain") (:+ "e")
-  (:= "s spill at once") (:- " ") (:+ "
-")
-  ;; ----------------
-  (:= "that make") (:- "
-") (:+ "s ")
-  (:= "Ingratefull man.
-"))
-
-                               )
+  (let ((q1 #?"Blow wind & cracke your cheekes, rage, blow\n\
+               You caterickes, & Hircanios spout til you haue drencht,\n\
+               The steeples drown'd the cockes, you sulpherous and\n\
+               Thought executing fires, vaunt-currers to\n\
+               Oke-cleauing thunderboults, singe my white head,\n\
+               And thou all shaking thunder, smite flat\n\
+               The thicke Rotunditie of the world, cracke natures\n\
+               Mold, all Germains spill at once that make\n\
+               Ingratefull man.\n")
+        (q2 #?"Blow windes, & crack your cheeks; Rage, blow\n\
+               You Cataracts, and Hyrricano's spout,\n\
+               Till you haue drench'd our Steeples, drown the Cockes.\n\
+               You Sulph'rous and Thought-executing Fires,\n\
+               Vaunt-curriors of Oake-cleauing Thunder-bolts,\n\
+               Sindge my white head. And thou all-shaking Thunder,\n\
+               Strike flat the thicke Rotundity o'th'world,\n\
+               Cracke Natures moulds, all germaines spill at once\n\
+               That makes ingratefull Man.\n")
+        (d '((:= "Blow wind") (:+ "es,")
+             (:= " & crack") (:- "e")
+             (:= " your cheek") (:- "e") (:= "s") (:- ",") (:+ ";")
+             ;; ----------------
+             (:= #?" rage, blow\nYou cat") (:- "e") (:+ "a") (:= "r")
+             (:- "i") (:+ "a") (:= "c") (:- "ke") (:+ "t") (:= "s, ")
+             (:- "&") (:+ "and")
+             (:= " H") (:- "i") (:+ "yr") (:= "r") (:+ "i")
+             (:= "can") (:- "i") (:= "o") (:+ "'")
+             (:= "s spout") (:- " ") (:+ #?",\n")
+             ;; ----------------
+             (:= "ti") (:+ "l")
+             (:= "l you haue drench") (:- #?"t,\nThe") (:+ "'d our")
+             (:= " steeples") (:+ ",")
+             (:= " drown") (:- "'d") (:= " the cockes") (:- ", ") (:+ #?".\n")
+             ;; ----------------
+             (:= "you sulph") (:- "e") (:+ "'") (:= "rous and")
+             (:- #?"\n") (:+ " ") (:= "Thought") (:- " ") (:+ "-")
+             (:= "executing fires,") (:- " ") (:+ #?"\n")
+             ;; ----------------
+             (:= "vaunt-curr") (:- "e") (:+ "io") (:= "rs ")
+             (:- "t") (:= "o") (:- #?"\n") (:+ "f ")
+             (:= "O") (:+ "a") (:= "ke-cleauing thunder") (:+ "-")
+             ;; ----------------
+             (:= "bo") (:- "u") (:= "lts,") (:- " ") (:+ #?"\n")
+             (:= "sin") (:+ "d") (:= "ge my white head")
+             (:- #?",\n") (:+ ". ")
+             ;; ----------------
+             (:= "And thou all") (:- " ") (:+ "-")
+             (:= "shaking thunder,") (:- " ") (:+ #?"\n")
+             ;; ----------------
+             (:= "s") (:- "mi") (:= "t") (:+ "rik") (:= "e flat")
+             (:- #?"\n") (:+ " ")
+             (:= "The thicke Rotundit") (:- "ie") (:+ "y")
+             (:= " o") (:- "f ") (:+ "'") (:= "th") (:- "e ") (:+ "'")
+             (:= "world,") (:- " ") (:+ #?"\n")
+             ;; ----------------
+             (:= "cracke natures") (:- #?"\n") (:+ " ")
+             (:= "Mo") (:+ "u") (:= "ld") (:+ "s")
+             (:= ", all Germain") (:+ "e") (:= "s spill at once")
+             (:- " ") (:+ #?"\n")
+             ;; ----------------
+             (:= "that make") (:- #?"\n") (:+ "s ")
+             (:= #?"Ingratefull man.\n")) ))
     (let ((d* (dmp:diff q1 q2 :test #'char-equal)))
       (is (equal d* d))
       (is (equalp (dmp:diff-origin d*) q1))
@@ -383,116 +375,129 @@ The") (:+ "'d our")
   ;; A diff between two DNA sequences from the NCBI GenBank, AF516753 and
   ;; AF521016. Bases are represented as symbols, so EQ is an appropriate
   ;; test function.
-
-  (multiple-value-bind (af516753 af521016 d) (values
-
-    '( g a g g c a g g g c g g a g c t g c g t a c t t t g t c c g c c c g c
-       g c g g c c c g t c g c t c g c g c c g c g g c g g g a a a a t c c g
-       a c c t g g c c g c g c a c c a c c g c c c c t t c t c g g c c c t c
-       c t g c g t t t g c c c a g g g t c g g c c c g c a g t g a t g g a g
-       g a g g a g g c g g a g a c c g a g g a g c a g c a g c g a t t c t c
-       t t a c c a a c a g a g g c t a a a g g c a g c a g t t c a c t a t a
-       c t g t g g g t t g t c t t t g c g a g g a a g t t g c a t t g g a c
-       a a a g a g a t g c a g t t c a g c a a a c a g a c c a t t g c g g c
-       c a t t t c g g a g c t g a c t t t c c g a c a g t g t g a a a a t t
-       t t g c c a a a g a c c t t g a a a t g t t t g c a a g
-       c a t a t g c a g g a a g c g g c a g g a a t a a g g a a a a g c a g
-       c c t c c t g a c t t t c c t c g c t t g g t g g t t t g a g t g g a
-       c c t c c c a g g c c a g t g c c g g g c c c c t c a t a g g a g a g
-       g a a g c c c g g g a g g t g g c c a g g c g g c a g g a a g g c g c
-       a c c c c c c c a g c a a t c t g c g c g c c g g g a c a g a a t g c
-       c c t g c a g g a a c t t c t t c t g g a a g a c c t t c t c c t c c
-       t g c a a a t a a a a c c t c a c c c a t g a a t g c t c a c g c a a
-       g t g t a a t g a c a g a c c t g a a t a a a a t g t a t t a a g c a
-       g c )
-
-    '( g g a g c t c c t g a t a a t g t g t a c t g c g t t a c a t g a t c
-       t g t a a a t c g t g g g c t a c g c a t c c t c t a c a c c c g a c
-       t g g a a c a c g c t t t g c a c c t a t g c g c a c a c g t g t t t
-       c g c g g a g a g t g g t g c t c a g c g t t g t g c c a g g c g c t
-       g a a t c a g g c t c t g g g g t g c a g c a g t g a c c t c g g t g
-       g t c a t g t c c c c g c g t c g c c c g g c c a c c t c c g c a g a
-       g c a a g c t g a g c a g g g g g c t g g c t g g a g g c c g a c g g
-       c g g a a t c c c c t c a a c g g a g c g c c g c c a g g g g g c g c
-       g c
-       g a g g c a g g g c g g a g c t g c g t a c t t t g t c c g c c c g c
-       g c g g c c c g t c g c t c g c g c c g c g g c g g g a a a a t c c g
-       a c c t g g c c g c g c a c c a c c g c c c c t t c t c g g c c c t c
-       c t g c g t t t g c c c a g g g t c g g c c c g c a g t g a t g g a g
-       g a g g a g g c g g a g a c c g a g g a g c a g c a g c g a t t c t c
-       t t a c c a a c a g a g g c t a a a g g c a g c a g t t c a c t a t a
-       c t g t g g g t t g t c t t t g c g a g g a a g t t g c a t t g g a c
-       a a a g a g a t g c a g t t c a g c a a a c a g a c c a t t g c g g c
-       c a t t t c g g a g c t g a c t t t c c g a c a g t g t g a a a a t t
-       t t g c c a a a g a c c t t g a a a t g t t t g c a a g
-       a c a t g c g a a a a g a a c c a c a a t t a a c a c t g a a g a t g
-       t g a a g c t c t t a g c c a g g a g g a g t a a t t c a c t g
-       c a t a t g c a g g a a g c g g c a g g a a t a a g g a a a a g c a g
-       c c t c c t g a c t t t c c t c g c t t g g t g g t t t g a g t g g a
-       c c t c c c a g g c c a g t g c c g g g c c c c t c a t a g g a g a g
-       g a a g c c c g g g a g g t g g c c a g g c g g c a g g a a g g c g c
-       a c c c c c c c a g c a a t c t g c g c g c c g g g a c a g a a t g c
-       c c t g c a g g a a c t t c t t c t g g a a g a c c t t c t c c t c c
-       t g c a a a t a a a a c c t c a c c c a t g a a t g c t c a c g c a a
-       g t g t a a t g a c a g a c c t g a a t a a a a t g t a t t a a g c a
-       g c
-       a g t g a t c t t t c c t c t c c t c c t t c c c a a g t c a t t t g
-       a a a a g t g t t t g t t a t t t a a a t t c c a a t a a t g c c c a
-       a t a c t g a c g t g t c t t g a g t a a t t t g g a a c c c a a a g
-       t g a a g a t c t t t g a t a a a g a t t t t t t t g t g g t t c g a
-       c t g g a c t g t g c t g a g t g c g g g c a c t g g g c t t t t c t
-       t c t g a t g t t c a t t a t g g t g c t g g g a a g c t c t g t c t
-       t t g a t t t a a a a t a a a a t a g c t a a a g g c t a c a c a a t
-       t a a g a g t t c a g a a t a a c a t c t t a t t t c a g t t t a t g
-       a a t t g a t a t g a a t t g t c t a a t t t a a a a a a t a t t t c
-       c c t c a c a t t a a a a g c c c a t t t t t a a c a t c a a a a a a
-       a a )
-
-    '((:+ (g g a g c t c c t g a t a a t g t g t a c t g c g t t a c a t g a
-           t c t g t a a a t c g t g g g c t a c g c a t c c t c t a c a c c
-           c g a c t g g a a c a c g c t t t g c a c c t a t g c g c a c a c
-           g t g t t t c g c g g a g a g t g g t g c t c a g c g t t g t g c
-           c a g g c g c t g a a t c a g g c t c t g g g g t g c a g c a g t
-           g a c c t c g g t g g t c a t g t c c c c g c g t c g c c c g g c
-           c a c c t c c g c a g a g c a a g c t g a g c a g g g g g c t g g
-           c t g g a g g c c g a c g g c g g a a t c c c c t c a a c g g a g
-           c g c c g c c a g g g g g c g c g c))
-      (:= (g a g g c a g g g c g g a g c t g c g t a c t t t g t c c g c c c
-           g c g c g g c c c g t c g c t c g c g c c g c g g c g g g a a a a
-           t c c g a c c t g g c c g c g c a c c a c c g c c c c t t c t c g
-           g c c c t c c t g c g t t t g c c c a g g g t c g g c c c g c a g
-           t g a t g g a g g a g g a g g c g g a g a c c g a g g a g c a g c
-           a g c g a t t c t c t t a c c a a c a g a g g c t a a a g g c a g
-           c a g t t c a c t a t a c t g t g g g t t g t c t t t g c g a g g
-           a a g t t g c a t t g g a c a a a g a g a t g c a g t t c a g c a
-           a a c a g a c c a t t g c g g c c a t t t c g g a g c t g a c t t
-           t c c g a c a g t g t g a a a a t t t t g c c a a a g a c c t t g
-           a a a t g t t t g c a a g))
-      (:+ (a c a t g c g a a a a g a a c c a c a a t t a a c a c t g a a g a
-           t g t g a a g c t c t t a g c c a g g a g g a g t a a t t c a c t
-           g))
-      (:= (c a t a t g c a g g a a g c g g c a g g a a t a a g g a a a a g c
-           a g c c t c c t g a c t t t c c t c g c t t g g t g g t t t g a g
-           t g g a c c t c c c a g g c c a g t g c c g g g c c c c t c a t a
-           g g a g a g g a a g c c c g g g a g g t g g c c a g g c g g c a g
-           g a a g g c g c a c c c c c c c a g c a a t c t g c g c g c c g g
-           g a c a g a a t g c c c t g c a g g a a c t t c t t c t g g a a g
-           a c c t t c t c c t c c t g c a a a t a a a a c c t c a c c c a t
-           g a a t g c t c a c g c a a g t g t a a t g a c a g a c c t g a a
-           t a a a a t g t a t t a a g c a g c))
-      (:+ (a g t g a t c t t t c c t c t c c t c c t t c c c a a g t c a t t
-           t g a a a a g t g t t t g t t a t t t a a a t t c c a a t a a t g
-           c c c a a t a c t g a c g t g t c t t g a g t a a t t t g g a a c
-           c c a a a g t g a a g a t c t t t g a t a a a g a t t t t t t t g
-           t g g t t c g a c t g g a c t g t g c t g a g t g c g g g c a c t
-           g g g c t t t t c t t c t g a t g t t c a t t a t g g t g c t g g
-           g a a g c t c t g t c t t t g a t t t a a a a t a a a a t a g c t
-           a a a g g c t a c a c a a t t a a g a g t t c a g a a t a a c a t
-           c t t a t t t c a g t t t a t g a a t t g a t a t g a a t t g t c
-           t a a t t t a a a a a a t a t t t c c c t c a c a t t a a a a g c
-           c c a t t t t t a a c a t c a a a a a a a a)))
-
-                                             )
+  (let ((af516753
+          '( g a g g c a g g g c g g a g c t g c g t a c t t t g t c c g
+             c c c g c g c g g c c c g t c g c t c g c g c c g c g g c g
+             g g a a a a t c c g a c c t g g c c g c g c a c c a c c g c
+             c c c t t c t c g g c c c t c c t g c g t t t g c c c a g g
+             g t c g g c c c g c a g t g a t g g a g g a g g a g g c g g
+             a g a c c g a g g a g c a g c a g c g a t t c t c t t a c c
+             a a c a g a g g c t a a a g g c a g c a g t t c a c t a t a
+             c t g t g g g t t g t c t t t g c g a g g a a g t t g c a t
+             t g g a c a a a g a g a t g c a g t t c a g c a a a c a g a
+             c c a t t g c g g c c a t t t c g g a g c t g a c t t t c c
+             g a c a g t g t g a a a a t t t t g c c a a a g a c c t t g
+             a a a t g t t t g c a a g
+             c a t a t g c a g g a a g c g g c a g g a a t a a g g a a a
+             a g c a g c c t c c t g a c t t t c c t c g c t t g g t g g
+             t t t g a g t g g a c c t c c c a g g c c a g t g c c g g g
+             c c c c t c a t a g g a g a g g a a g c c c g g g a g g t g
+             g c c a g g c g g c a g g a a g g c g c a c c c c c c c a g
+             c a a t c t g c g c g c c g g g a c a g a a t g c c c t g c
+             a g g a a c t t c t t c t g g a a g a c c t t c t c c t c c
+             t g c a a a t a a a a c c t c a c c c a t g a a t g c t c a
+             c g c a a g t g t a a t g a c a g a c c t g a a t a a a a t
+             g t a t t a a g c a g c ))
+        (af521016
+          '( g g a g c t c c t g a t a a t g t g t a c t g c g t t a c a
+             t g a t c t g t a a a t c g t g g g c t a c g c a t c c t c
+             t a c a c c c g a c t g g a a c a c g c t t t g c a c c t a
+             t g c g c a c a c g t g t t t c g c g g a g a g t g g t g c
+             t c a g c g t t g t g c c a g g c g c t g a a t c a g g c t
+             c t g g g g t g c a g c a g t g a c c t c g g t g g t c a t
+             g t c c c c g c g t c g c c c g g c c a c c t c c g c a g a
+             g c a a g c t g a g c a g g g g g c t g g c t g g a g g c c
+             g a c g g c g g a a t c c c c t c a a c g g a g c g c c g c
+             c a g g g g g c g c g c
+             g a g g c a g g g c g g a g c t g c g t a c t t t g t c c g
+             c c c g c g c g g c c c g t c g c t c g c g c c g c g g c g
+             g g a a a a t c c g a c c t g g c c g c g c a c c a c c g c
+             c c c t t c t c g g c c c t c c t g c g t t t g c c c a g g
+             g t c g g c c c g c a g t g a t g g a g g a g g a g g c g g
+             a g a c c g a g g a g c a g c a g c g a t t c t c t t a c c
+             a a c a g a g g c t a a a g g c a g c a g t t c a c t a t a
+             c t g t g g g t t g t c t t t g c g a g g a a g t t g c a t
+             t g g a c a a a g a g a t g c a g t t c a g c a a a c a g a
+             c c a t t g c g g c c a t t t c g g a g c t g a c t t t c c
+             g a c a g t g t g a a a a t t t t g c c a a a g a c c t t g
+             a a a t g t t t g c a a g
+             a c a t g c g a a a a g a a c c a c a a t t a a c a c t g a
+             a g a t g t g a a g c t c t t a g c c a g g a g g a g t a a
+             t t c a c t g
+             c a t a t g c a g g a a g c g g c a g g a a t a a g g a a a
+             a g c a g c c t c c t g a c t t t c c t c g c t t g g t g g
+             t t t g a g t g g a c c t c c c a g g c c a g t g c c g g g
+             c c c c t c a t a g g a g a g g a a g c c c g g g a g g t g
+             g c c a g g c g g c a g g a a g g c g c a c c c c c c c a g
+             c a a t c t g c g c g c c g g g a c a g a a t g c c c t g c
+             a g g a a c t t c t t c t g g a a g a c c t t c t c c t c c
+             t g c a a a t a a a a c c t c a c c c a t g a a t g c t c a
+             c g c a a g t g t a a t g a c a g a c c t g a a t a a a a t
+             g t a t t a a g c a g c
+             a g t g a t c t t t c c t c t c c t c c t t c c c a a g t c
+             a t t t g a a a a g t g t t t g t t a t t t a a a t t c c a
+             a t a a t g c c c a a t a c t g a c g t g t c t t g a g t a
+             a t t t g g a a c c c a a a g t g a a g a t c t t t g a t a
+             a a g a t t t t t t t g t g g t t c g a c t g g a c t g t g
+             c t g a g t g c g g g c a c t g g g c t t t t c t t c t g a
+             t g t t c a t t a t g g t g c t g g g a a g c t c t g t c t
+             t t g a t t t a a a a t a a a a t a g c t a a a g g c t a c
+             a c a a t t a a g a g t t c a g a a t a a c a t c t t a t t
+             t c a g t t t a t g a a t t g a t a t g a a t t g t c t a a
+             t t t a a a a a a t a t t t c c c t c a c a t t a a a a g c
+             c c a t t t t t a a c a t c a a a a a a a a ))
+        (d '((:+ ( g g a g c t c c t g a t a a t g t g t a c t g c g t t
+                   a c a t g a t c t g t a a a t c g t g g g c t a c g c
+                   a t c c t c t a c a c c c g a c t g g a a c a c g c t
+                   t t g c a c c t a t g c g c a c a c g t g t t t c g c
+                   g g a g a g t g g t g c t c a g c g t t g t g c c a g
+                   g c g c t g a a t c a g g c t c t g g g g t g c a g c
+                   a g t g a c c t c g g t g g t c a t g t c c c c g c g
+                   t c g c c c g g c c a c c t c c g c a g a g c a a g c
+                   t g a g c a g g g g g c t g g c t g g a g g c c g a c
+                   g g c g g a a t c c c c t c a a c g g a g c g c c g c
+                   c a g g g g g c g c g c ))
+             (:= ( g a g g c a g g g c g g a g c t g c g t a c t t t g t
+                   c c g c c c g c g c g g c c c g t c g c t c g c g c c
+                   g c g g c g g g a a a a t c c g a c c t g g c c g c g
+                   c a c c a c c g c c c c t t c t c g g c c c t c c t g
+                   c g t t t g c c c a g g g t c g g c c c g c a g t g a
+                   t g g a g g a g g a g g c g g a g a c c g a g g a g c
+                   a g c a g c g a t t c t c t t a c c a a c a g a g g c
+                   t a a a g g c a g c a g t t c a c t a t a c t g t g g
+                   g t t g t c t t t g c g a g g a a g t t g c a t t g g
+                   a c a a a g a g a t g c a g t t c a g c a a a c a g a
+                   c c a t t g c g g c c a t t t c g g a g c t g a c t t
+                   t c c g a c a g t g t g a a a a t t t t g c c a a a g
+                   a c c t t g a a a t g t t t g c a a g ))
+             (:+ ( a c a t g c g a a a a g a a c c a c a a t t a a c a c
+                   t g a a g a t g t g a a g c t c t t a g c c a g g a g
+                   g a g t a a t t c a c t g ))
+             (:= ( c a t a t g c a g g a a g c g g c a g g a a t a a g g
+                   a a a a g c a g c c t c c t g a c t t t c c t c g c t
+                   t g g t g g t t t g a g t g g a c c t c c c a g g c c
+                   a g t g c c g g g c c c c t c a t a g g a g a g g a a
+                   g c c c g g g a g g t g g c c a g g c g g c a g g a a
+                   g g c g c a c c c c c c c a g c a a t c t g c g c g c
+                   c g g g a c a g a a t g c c c t g c a g g a a c t t c
+                   t t c t g g a a g a c c t t c t c c t c c t g c a a a
+                   t a a a a c c t c a c c c a t g a a t g c t c a c g c
+                   a a g t g t a a t g a c a g a c c t g a a t a a a a t
+                   g t a t t a a g c a g c ))
+             (:+ ( a g t g a t c t t t c c t c t c c t c c t t c c c a a
+                   g t c a t t t g a a a a g t g t t t g t t a t t t a a
+                   a t t c c a a t a a t g c c c a a t a c t g a c g t g
+                   t c t t g a g t a a t t t g g a a c c c a a a g t g a
+                   a g a t c t t t g a t a a a g a t t t t t t t g t g g
+                   t t c g a c t g g a c t g t g c t g a g t g c g g g c
+                   a c t g g g c t t t t c t t c t g a t g t t c a t t a
+                   t g g t g c t g g g a a g c t c t g t c t t t g a t t
+                   t a a a a t a a a a t a g c t a a a g g c t a c a c a
+                   a t t a a g a g t t c a g a a t a a c a t c t t a t t
+                   t c a g t t t a t g a a t t g a t a t g a a t t g t c
+                   t a a t t t a a a a a a t a t t t c c c t c a c a t t
+                   a a a a g c c c a t t t t t a a c a t c a a a a a a a
+                   a )) )))
     (let ((d* (dmp:diff af516753 af521016 :test #'eq)))
       (is (equal d* d))
       (is (equal (dmp:diff-origin d*) af516753))
@@ -599,8 +604,10 @@ The") (:+ "'d our")
                0 0 7 8))
     ;; Ambiguity
     (is (hunkp (mkhunk '((:- "e") (:+ "at")) 2 2 1 2
-                       "The quick brown fox jumps.  The quick brown fox crashes.")
-               '((:= "Th") (:- "e") (:+ "at") (:= " quick brown fox jumps. "))
+                       #?"The quick brown fox jumps.  \
+                          The quick brown fox crashes.")
+               '((:= "Th") (:- "e") (:+ "at")
+                 (:= " quick brown fox jumps. "))
                0 0 27 28))))
 
 (test write-chars-patch
@@ -611,7 +618,8 @@ The") (:+ "'d our")
                    :diffs '((:= "jump") (:- "s") (:+ "ed") (:= " over ")
                             (:- "the") (:+ "a") (:= #?"\nlaz")))
                  s))
-             #?"@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n")))
+             #?"@@ -21,18 +22,17 @@\n\
+                \ jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n")))
 
 (test read-chars-patch
   (flet ((mkpatch (str)
@@ -619,7 +627,8 @@ The") (:+ "'d our")
          (hunkp0 (patch &rest args)
            (apply #'hunkp (car patch) args)))
     (is (equal (mkpatch "") '()))
-    (is (hunkp0 (mkpatch #?"@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n")
+    (is (hunkp0 (mkpatch #?"@@ -21,18 +22,17 @@\n\
+                            \ jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n")
                 '((:= "jump") (:- "s") (:+ "ed") (:= " over ") (:- "the")
                   (:+ "a") (:= #?"\nlaz"))
                 20 21 18 17))
@@ -633,11 +642,17 @@ The") (:+ "'d our")
 
 (test read-write-chars-patch
   (flet ((rw (str)
-           (let ((p (with-input-from-string (in str) (dmp:read-chars-patch in))))
-             (with-output-to-string (out) (dmp:write-chars-patch p out)))))
-    (is (equal #1=#?"@@ -21,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n"
+           (let ((p (with-input-from-string (in str)
+                      (dmp:read-chars-patch in))))
+             (with-output-to-string (out)
+               (dmp:write-chars-patch p out)))))
+    (is (equal #1=#?"@@ -21,18 +22,17 @@\n\
+                     \ jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n"
                (rw #1#)))
-    (is (equal #2=#?"@@ -1,9 +1,9 @@\n-f\n+F\n oo+fooba\n@@ -7,9 +7,9 @@\n obar\n-,\n+.\n tes\n"
+    (is (equal #2=#?"@@ -1,9 +1,9 @@\n\
+                     -f\n+F\n oo+fooba\n\
+                     @@ -7,9 +7,9 @@\n\
+                     \ obar\n-,\n+.\n tes\n"
                (rw #2#)))))
 
 (test make-patch
@@ -654,9 +669,15 @@ The") (:+ "'d our")
     (let ((t1 "The quick brown fox jumps over the lazy dog.")
           (t2 "That quick brown fox jumped over a lazy dog."))
       (is (equal (mkp t2 t1 :test #'char=)
-                 #?"@@ -1,8 +1,7 @@\n Th\n-at\n+e\n  qui\n@@ -21,17 +21,18 @@\n jump\n-ed\n+s\n  over \n-a\n+the\n  laz\n"))
+                 #?"@@ -1,8 +1,7 @@\n\
+                    \ Th\n-at\n+e\n  qui\n\
+                    @@ -21,17 +21,18 @@\n\
+                    \ jump\n-ed\n+s\n  over \n-a\n+the\n  laz\n"))
       (is (equal (mkp t1 t2 :test #'char=)
-                 #1=#?"@@ -1,11 +1,12 @@\n Th\n-e\n+at\n  quick b\n@@ -22,18 +22,17 @@\n jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n"))
+                 #1=#?"@@ -1,11 +1,12 @@\n\
+                       \ Th\n-e\n+at\n  quick b\n\
+                       @@ -22,18 +22,17 @@\n\
+                       \ jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n"))
       (let ((diffs (let ((dmp:*diff-check-lines-length* nil))
                      (dmp:diff t1 t2 :test #'char=))))
         (is (equal (mkp :diffs diffs) #1#))
@@ -666,7 +687,9 @@ The") (:+ "'d our")
     (let ((t1 "`1234567890-=[]\\;',./")
           (t2 "~!@#$%^&*()_+{}|:\"<>?"))
       (is (equal (mkp t1 t2 :test #'char=)
-                 #?"@@ -1,21 +1,21 @@\n-%601234567890-=%5B%5D%5C;',./\n+~!@#$%25%5E&*()_+%7B%7D%7C:%22%3C%3E?\n"))
+                 #?"@@ -1,21 +1,21 @@\n\
+                    -%601234567890-=%5B%5D%5C;',./\n\
+                    +~!@#$%25%5E&*()_+%7B%7D%7C:%22%3C%3E?\n"))
       (is (hunkp (car (dmp:make-patch t1 t2 :test #'char=))
                  '((:- "`1234567890-=[]\\;',./")
                    (:+ "~!@#$%^&*()_+{}|:\"<>?")))))
@@ -678,7 +701,8 @@ The") (:+ "'d our")
            (l2 (+ l1 (length #2#)))
            (i (- (length t1) l1)))
       (is (equal (mkp t1 t2 :test #'char=)
-                 #?"@@ -${(1+ i)},${l1} +${(1+ i)},${l2} @@\n ${(subseq t1 i)}\n+123\n")))))
+                 #?"@@ -${(1+ i)},${l1} +${(1+ i)},${l2} @@\n\
+                    \ ${(subseq t1 i)}\n+123\n")))))
 
 (test add-padding
   (flet ((mkp+p (a b)
@@ -709,21 +733,39 @@ The") (:+ "'d our")
                  (with-output-to-string (out)
                    (dmp:write-chars-patch p out)))))))
     (is (equal
-          (mkp+sbh "abcdefghijklmnopqrstuvwxyz01234567890"
-                   "XabXcdXefXghXijXklXmnXopXqrXstXuvXwxXyzX01X23X45X67X89X0")
-          #?"@@ -1,32 +1,46 @@\n+X\n ab\n+X\n cd\n+X\n ef\n+X\n gh\n+X\n ij\n+X\n kl\n+X\n mn\n+X\n op\n+X\n qr\n+X\n st\n+X\n uv\n+X\n wx\n+X\n yz\n+X\n 012345\n@@ -25,13 +39,18 @@\n zX01\n+X\n 23\n+X\n 45\n+X\n 67\n+X\n 89\n+X\n 0\n"))
+          (mkp+sbh #?"abcdefghijklmnopqrstuvwxyz01234567890"
+                   #?"XabXcdXefXghXijXklXmnXopXqrXstXuvXwxXyz\
+                      X01X23X45X67X89X0")
+          #?"@@ -1,32 +1,46 @@\n\
+             +X\n ab\n+X\n cd\n+X\n ef\n+X\n gh\n+X\n ij\n+X\n kl\n\
+             +X\n mn\n+X\n op\n+X\n qr\n+X\n st\n+X\n uv\n+X\n wx\n\
+             +X\n yz\n+X\n 012345\n\
+             @@ -25,13 +39,18 @@\n\
+             \ zX01\n+X\n 23\n+X\n 45\n+X\n 67\n+X\n 89\n+X\n 0\n"))
    (multiple-value-bind (p* p)
-        (mkp+sbh "abcdef1234567890123456789012345678901234567890123456789012345678901234567890uvwxyz"
-                 "abcdefuvwxyz")
+        (mkp+sbh #?"abcdef1234567890123456789012345678901234567890\
+                    123456789012345678901234567890uvwxyz"
+                 #?"abcdefuvwxyz")
       (is (equal p p*)))
     (is (equal
-          (mkp+sbh "1234567890123456789012345678901234567890123456789012345678901234567890"
-                   "abc")
-          #?"@@ -1,32 +1,4 @@\n-1234567890123456789012345678\n 9012\n@@ -29,32 +1,4 @@\n-9012345678901234567890123456\n 7890\n@@ -57,14 +1,3 @@\n-78901234567890\n+abc\n"))
+          (mkp+sbh #?"123456789012345678901234567890123456789\
+                      0123456789012345678901234567890"
+                   #?"abc")
+          #?"@@ -1,32 +1,4 @@\n\
+             -1234567890123456789012345678\n 9012\n\
+             @@ -29,32 +1,4 @@\n\
+             -9012345678901234567890123456\n 7890\n\
+             @@ -57,14 +1,3 @@\n\
+             -78901234567890\n+abc\n"))
     (is (equal
-          (mkp+sbh "abcdefghij , h : 0 , t : 1 abcdefghij , h : 0 , t : 1 abcdefghij , h : 0 , t : 1"
-                   "abcdefghij , h : 1 , t : 1 abcdefghij , h : 1 , t : 1 abcdefghij , h : 0 , t : 1")
-          #?"@@ -2,32 +2,32 @@\n bcdefghij , h : \n-0\n+1\n  , t : 1 abcdef\n@@ -29,32 +29,32 @@\n bcdefghij , h : \n-0\n+1\n  , t : 1 abcdef\n")) ))
+          (mkp+sbh #?"abcdefghij , h : 0 , t : 1 abcdefghij , \
+                      h : 0 , t : 1 abcdefghij , h : 0 , t : 1"
+                   #?"abcdefghij , h : 1 , t : 1 abcdefghij , \
+                      h : 1 , t : 1 abcdefghij , h : 0 , t : 1")
+          #?"@@ -2,32 +2,32 @@\n\
+             \ bcdefghij , h : \n-0\n+1\n  , t : 1 abcdef\n\
+             @@ -29,32 +29,32 @@\n\
+             \ bcdefghij , h : \n-0\n+1\n  , t : 1 abcdef\n")) ))
 
 (test apply-patch
   (flet ((mkp (a b)
@@ -753,31 +795,41 @@ The") (:+ "'d our")
       ((ap #1# "I am the very model of a modern major general.")
        '("I am the very model of a modern major general." (nil nil)))
       ;; Big delete, small change
-      ((ap (mkp "x1234567890123456789012345678901234567890123456789012345678901234567890y"
-                "xabcy")
-           "x123456789012345678901234567890-----++++++++++-----123456789012345678901234567890y")
+      ((ap (mkp #?"x12345678901234567890123456789012345678901234567890\
+                   12345678901234567890y"
+                #?"xabcy")
+           #?"x123456789012345678901234567890-----++++++++++-----\
+              123456789012345678901234567890y")
        '("xabcy" (t t)))
       ;; Big delete, big change (1)
-      ((ap (mkp "p1234567890123456789012345678901234567890123456789012345678901234567890q"
-                "pabcq")
-           "p12345678901234567890---------------++++++++++---------------12345678901234567890q")
-       '("pabc12345678901234567890---------------++++++++++---------------12345678901234567890q"
+      ((ap (mkp #?"p12345678901234567890123456789012345678901234567890\
+                   12345678901234567890q"
+                #?"pabcq")
+           #?"p12345678901234567890---------------++++++++++---------------\
+              12345678901234567890q")
+       '(#?"pabc12345678901234567890---------------++++++++++---------------\
+            12345678901234567890q"
          (nil t)))
       ;; Big delete, big change (2)
-      ((ap (mkp "m1234567890123456789012345678901234567890123456789012345678901234567890n"
-                "mabcn")
-           "m12345678901234567890---------------++++++++++---------------12345678901234567890n"
+      ((ap (mkp #?"m12345678901234567890123456789012345678901234567890\
+                   12345678901234567890n"
+                #?"mabcn")
+           #?"m12345678901234567890---------------++++++++++---------------\
+              12345678901234567890n"
            :del-th 0.6)
        '("mabcn" (t t)))
       ;; Compensate for failed patch
-      ((ap (mkp "abcdefghijklmnopqrstuvwxyz--------------------1234567890"
-                "abcXXXXXXXXXXdefghijklmnopqrstuvwxyz--------------------1234567YYYYYYYYYY890")
+      ((ap (mkp #?"abcdefghijklmnopqrstuvwxyz--------------------1234567890"
+                #?"abcXXXXXXXXXXdefghijklmnopqrstuvwxyz--------------------\
+                   1234567YYYYYYYYYY890")
            "ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------1234567890"
            :match-th 0.0
            :match-d 0)
-       '("ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------1234567YYYYYYYYYY890"
+       '(#?"ABCDEFGHIJKLMNOPQRSTUVWXYZ--------------------\
+            1234567YYYYYYYYYY890"
          (nil t))))
-    (flet ((pstr (p) (with-output-to-string (out) (dmp:write-chars-patch p out))))
+    (flet ((pstr (p)
+             (with-output-to-string (out) (dmp:write-chars-patch p out))))
       ;; No side effects
       (let* ((p (mkp "" "test"))
              (before (pstr p))
