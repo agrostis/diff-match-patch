@@ -22,7 +22,7 @@
 (in-package #:diff-match-patch)
 
 (declaim (inline get-internal-seconds seq-type make-adjustable-vector
-                 narrow empty prefixp suffixp join mapjoin join*
+                 narrow empty prefixp suffixp join join* mapcall
                  revappend* whitespace-char-p newline-char-p)
          (optimize (speed 3) (safety 0)))
 
@@ -47,6 +47,13 @@
         ((stringp x) 'string)
         ((vectorp x) 'vector)
         (t (error "Not a sequence"))))
+
+(defun fn-to-hash-table-test (fn)
+  (macrolet ((is-fn (x . ff) `(member (coerce ,x 'function) (list ,@ff))))
+    (cond
+      ((is-fn fn #'eq #'eql #'equal #'equalp) fn)
+      ((is-fn fn #'= #'char= #'string=) #'equal)
+      (t #'equalp))))
 
 (defun make-adjustable-vector (&optional (size 7))
   (make-array size :fill-pointer 0 :adjustable t))
@@ -104,17 +111,17 @@
                 (collect (narrow str last-break))))))
 
 (defun join (parts)
-  (let ((parts* (remove nil parts)))
+  (let ((parts* (remove-if #'empty parts)))
     (cond ((null parts*) #())
           ((null (cdr parts*)) (car parts*))
           (t (apply #'concatenate (seq-type (car parts*)) parts*)))))
 
-(defun mapjoin (fn &optional parts)
-  (let ((mapfn (lambda (parts) (join (map 'list fn parts)))))
-    (if parts (mapfn parts) mapfn)))
-
 (defun join* (&rest parts)
   (join parts))
+
+(defun mapcall (fn mfn &optional parts)
+  (let ((mapfn (lambda (parts) (funcall fn (map 'list mfn parts)))))
+    (if parts (funcall mapfn parts) mapfn)))
 
 (defun overlap (a b &optional (test #'eql))
   (let ((l (min (length a) (length b))))

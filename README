@@ -83,7 +83,7 @@ exports the following names:
    Given the difference list DIFFS between two sequences, return the
    corresponding Levenshtein distance.
 
-{function} INDEX-ABBREVIATOR
+{function} INDEX-ABBREVIATOR &OPTIONAL (HASH-TABLE-TEST #'EQUAL)
 
    Return two unary functions: one to abbreviate things to integers, the
    other to restore them from integer abbreviations.

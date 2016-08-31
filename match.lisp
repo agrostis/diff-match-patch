@@ -42,19 +42,13 @@
 (defun match-bitap.alphabet (pattern test)
   "Compute the alphabet for the Bitap algorithm, as a hash table mapping
    elements of PATTERN to integer hashes."
-  (let ((t-test (macrolet ((is-fn (x . ff)
-                             `(member (coerce ,x 'function) (list ,@ff))))
-                  (cond
-                    ((is-fn test #'eq #'eql #'equal #'equalp) test)
-                    ((is-fn test #'= #'char= #'string=) #'equal)
-                    (t #'equalp)))))
-    (iter (for x :in-sequence pattern)
-          (for i :upfrom 0)
-          (with table := (make-hash-table :test t-test))
-          (with l := (length pattern))
-          (setf (gethash x table)
-                (logior (gethash x table 0) (ash 1 (- l i 1))))
-          (finally (return table)))))
+  (iter (for x :in-sequence pattern)
+        (for i :upfrom 0)
+        (with table := (make-hash-table :test (fn-to-hash-table-test test)))
+        (with l := (length pattern))
+        (setf (gethash x table)
+              (logior (gethash x table 0) (ash 1 (- l i 1))))
+        (finally (return table))))
 
 (defun match-bitap (space pattern position test)
   "Use the Bitap algorithm to locate the best instance of PATTERN in SPACE

@@ -85,6 +85,14 @@
       ((empty a) (if (empty b) '() `((:+ ,b))))
       ((empty b) `((:- ,a)))
       ((eq a b) `((:= ,b)))
+      ;; Non-string EQUAL-comparable sequences can be abbreviated
+      ((and (member (coerce test 'function) (list #'equal #'string=))
+            (not (and (stringp a) (stringp b))))
+       (dlet* (((values abbr unabbr) (index-abbreviator))
+               (a* (map 'vector abbr a)) (b* (map 'vector abbr b))
+               (type (seq-type a)) (cast (lambda (x) (coerce x type))))
+         (mapdiff (mapcall cast unabbr) (diff a* b* :test #'=))))
+      ;; General case
       (t (dlet* (((values prefix a* b* suffix)
                   (affix-match (coerce a 'vector) (coerce b 'vector) test)))
            (if (null a*) `((:= ,prefix))
@@ -182,10 +190,10 @@
                     (subseq a sa (+ sa l))
                     (subseq a (+ sa l)) (subseq b (+ sb l)))))))))
 
-(defun index-abbreviator ()
+(defun index-abbreviator (&optional (hash-table-test #'equal))
   "Return two unary functions: one to abbreviate things to integers, the
    other to restore them from integer abbreviations."
-  (let ((table (make-hash-table :test 'equal))
+  (let ((table (make-hash-table :test hash-table-test))
         (untable (make-adjustable-vector)))
     (values (lambda (x)
                  (or #1=(gethash x table)
@@ -202,7 +210,7 @@
           (a* (map 'vector abbr (split-lines a)))
           (b* (map 'vector abbr (split-lines b)))
           (diffs (cleanup-semantic
-                   (mapdiff (mapjoin unabbr) (diff a* b* :test #'=))
+                   (mapdiff (mapcall #'join unabbr) (diff a* b* :test #'=))
                    test)))
     (iter (for (values dels adds middle rest) := (next-diffs diffs))
           (setq diffs rest)
