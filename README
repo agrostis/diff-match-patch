@@ -117,10 +117,22 @@ exports the following names:
    Write the formatted representation of the given PATCH (a hunk or list of
    hunks, encoding a difference of character strings) to the stream OUT.
 
-{function} READ-CHARS-PATCH &optional (IN *STANDARD-INPUT*)
+{function} READ-CHARS-PATCH &OPTIONAL (IN *STANDARD-INPUT*)
 
    Read a formatted representation of patch encoding a difference of
    character strings from the stream IN and return it as a list of hunks.
+
+{function} WRITE-LINES-PATCH PATCH &OPTIONAL (OUT *STANDARD-OUTPUT*)
+
+   Write the formatted representation of the given PATCH (a hunk or list of
+   hunks, encoding a difference of line sequences) to the stream OUT.
+
+{function} READ-LINES-PATCH &OPTIONAL (IN *STANDARD-INPUT*) (SEQ-TYPE 'VECTOR)
+
+   Read a formatted representation of patch encoding a difference of line
+   sequences from the stream IN and return it as a list of hunks.  The type
+   of line sequences in hunk difference lists is determined by the parameter
+   SEQ-TYPE (which normally should be one of the symbols VECTOR or LIST).
 
 {class} HUNK
 {accessor} HUNK-DIFFS HUNK

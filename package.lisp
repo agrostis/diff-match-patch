@@ -32,7 +32,8 @@
            #:hunk #:hunk-diffs #:hunk-start-a #:hunk-start-b
            #:hunk-length-a #:hunk-length-b
            #:make-patch #:apply-patch
-           #:write-chars-patch #:read-chars-patch))
+           #:write-chars-patch #:read-chars-patch
+           #:write-lines-patch #:read-lines-patch))
 
 ;;;; Global parameters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

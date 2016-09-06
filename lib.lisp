@@ -43,10 +43,15 @@
         `(let ,vars ,@dsetqs ,@body)))))
 
 (defun seq-type (x)
-  (cond ((listp x) 'list)
-        ((stringp x) 'string)
-        ((vectorp x) 'vector)
-        (t (error "Not a sequence"))))
+  (values (cond ((listp x) 'list)
+                ((stringp x) 'string)
+                ((vectorp x) 'vector)
+                (t (error "Not a sequence")))
+          (if (not (null x))
+              (let ((x0 (elt x 0)))
+                (if (typep x0 'sequence)
+                    (seq-type x0)
+                    (type-of x0))))))
 
 (defun fn-to-hash-table-test (fn)
   (macrolet ((is-fn (x . ff) `(member (coerce ,x 'function) (list ,@ff))))
@@ -166,6 +171,10 @@
           (write-char (hexc i) out)
           (write-char (hexc j) out)))))
 
+(defun write-line-urlencode (line out)
+  (iter (for c :in-string line) (write-char-urlencode c out)
+        (finally (terpri out))))
+
 (defun read-char-urldecode (in)
   (flet ((read-hex ()
            (let* ((c (peek-char nil in nil))
@@ -189,3 +198,10 @@
                 (i1 (unread-char c1 in) c)
                 (t c)))
             c)))))
+
+(defun read-line-urldecode (in)
+  (iter (with near-end := nil)
+        (for c := (peek-char nil in nil))
+        (cond ((newline-char-p c) (setq near-end (read-char in)))
+              ((or (not c) near-end) (finish))
+              (t (collect (read-char-urldecode in) :result-type 'string)))))

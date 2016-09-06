@@ -576,12 +576,19 @@
   (is (eql (dmp:levenshtein '((:- "abc") (:= "xyz") (:+ "1234"))) 7)))
 
 (defun hunkp (h &optional dd a0 b0 la lb)
-  (and (typep h 'dmp:hunk)
-       (or (null dd) (equal (dmp:hunk-diffs h) dd))
-       (or (null a0) (equal (dmp:hunk-start-a h) a0))
-       (or (null b0) (equal (dmp:hunk-start-b h) b0))
-       (or (null la) (equal (dmp:hunk-length-a h) la))
-       (or (null lb) (equal (dmp:hunk-length-b h) lb))))
+  (labels ((vequal (a b)
+             (cond ((and (consp a) (consp b))
+                    (and (vequal (car a) (car b))
+                         (vequal (cdr a) (cdr b))))
+                   ((and (vectorp a) (vectorp b))
+                    (null (mismatch a b :test #'vequal)))
+                   (t (equal a b)))))
+    (and (typep h 'dmp:hunk)
+         (or (null dd) (vequal (dmp:hunk-diffs h) dd))
+         (or (null a0) (equal (dmp:hunk-start-a h) a0))
+         (or (null b0) (equal (dmp:hunk-start-b h) b0))
+         (or (null la) (equal (dmp:hunk-length-a h) la))
+         (or (null lb) (equal (dmp:hunk-length-b h) lb)))))
 
 (test patch-add-context
   (flet ((mkhunk (dd a0 b0 la lb ctx &key (margin 4))
@@ -621,6 +628,22 @@
              #?"@@ -21,18 +22,17 @@\n\
                 \ jump\n-s\n+ed\n  over \n-the\n+a\n %0Alaz\n")))
 
+(test write-lines-patch
+  (is (equal (with-output-to-string (s)
+               (dmp:write-lines-patch
+                 (make-instance 'dmp:hunk
+                   :start-a 0 :start-b 0 :length-a 8 :length-b 9
+                   :diffs '((:- #("foo" "bar" "xyzzy" "cluck"))
+                            (:+ #("xyzzy" "roo" ""))
+                            (:= #("quux" "quux" "quux" "quuuux"))
+                            (:+ #("xyzzy" "bar"))))
+                 s))
+             #?"@@ -1,8 +1,9 @@\n\
+                -foo\n-bar\n-xyzzy\n-cluck\n\
+                +xyzzy\n+roo\n+\n\
+                \ quux\n quux\n quux\n quuuux\n\
+                +xyzzy\n+bar\n")))
+
 (test read-chars-patch
   (flet ((mkpatch (str)
            (with-input-from-string (in str) (dmp:read-chars-patch in)))
@@ -640,20 +663,51 @@
                 '((:+ "abc")) 0 0 0 3))
     (signals simple-error (mkpatch #?"Bad\nPatch\n"))))
 
-(test read-write-chars-patch
-  (flet ((rw (str)
+(test read-lines-patch
+  (flet ((mkpatch (str)
+           (with-input-from-string (in str) (dmp:read-lines-patch in)))
+         (hunkp0 (patch &rest args)
+           (apply #'hunkp (car patch) args)))
+    (is (equal (mkpatch "") '()))
+    (is (hunkp0
+          (mkpatch
+            #?"@@ -1,5 +1,5 @@\n\
+               \ There once was a hermit named Dave\n\
+               \ Who kept a dead whore in his cave.\n\
+               -I know it's a sin,\n\
+               -He said with a grin,\n\
+               +I have to admit,\n\
+               +She smells just a bit.\n\
+               \ But think of the money I save!\n")
+          '((:= #("There once was a hermit named Dave"
+                  "Who kept a dead whore in his cave."))
+            (:- #("I know it's a sin," "He said with a grin,"))
+            (:+ #("I have to admit," "She smells just a bit."))
+            (:= #("But think of the money I save!")))
+          0 0 5 5))))
+
+(test read-write-patch
+  (flet ((rw (str linewise)
            (let ((p (with-input-from-string (in str)
-                      (dmp:read-chars-patch in))))
+                      (if linewise
+                          (dmp:read-lines-patch in linewise)
+                          (dmp:read-chars-patch in)))))
              (with-output-to-string (out)
-               (dmp:write-chars-patch p out)))))
+               (if linewise
+                   (dmp:write-lines-patch p out)
+                   (dmp:write-chars-patch p out))))))
     (is (equal #1=#?"@@ -21,18 +22,17 @@\n\
                      \ jump\n-s\n+ed\n  over \n-the\n+a\n  laz\n"
-               (rw #1#)))
+               (rw #1# nil)))
+    (is (equal #1# (rw #1# 'vector)))
+    (is (equal #1# (rw #1# 'list)))
     (is (equal #2=#?"@@ -1,9 +1,9 @@\n\
                      -f\n+F\n oo+fooba\n\
                      @@ -7,9 +7,9 @@\n\
                      \ obar\n-,\n+.\n tes\n"
-               (rw #2#)))))
+               (rw #2# nil)))
+    (is (equal #2# (rw #2# 'vector)))
+    (is (equal #2# (rw #2# 'list)))))
 
 (test make-patch
   (flet ((mkp (&rest args)

@@ -151,65 +151,101 @@
                 (when hunk (collect hunk))
                 (until (endp (setq diffs rest))))))))
 
+(defun format-hunk-header (hunk out)
+  (with-slots (start-a start-b length-a length-b) hunk
+    (format out "@@ -~? +~? @@~%"
+            #1="~[~A,0~;~*~A~:;~*~A,~3:*~A~]"
+            (list length-a start-a (1+ start-a))
+            #1#
+            (list length-b start-b (1+ start-b)))))
+
 (defun write-chars-patch (patch &optional (out *standard-output*))
   "Write the formatted representation of the given PATCH (a hunk or list of
    hunks, encoding a difference of character strings) to the stream OUT."
   (etypecase patch
     (list (mapc (lambda (hunk) (write-chars-patch hunk out)) patch))
-    (hunk (with-slots (diffs start-a start-b length-a length-b) patch
+    (hunk (with-slots (diffs) patch
             (when (not (eq (diff-seq-type diffs) 'string))
               (error "Non-string patch in WRITE-CHARS-PATCH"))
-            (format out "@@ -~? +~? @@~%"
-              #1="~[~A,0~;~*~A~:;~*~A,~3:*~A~]"
-              (list length-a start-a (1+ start-a))
-              #1#
-              (list length-b start-b (1+ start-b)))
+            (format-hunk-header patch out)
             (iter (for (op x) :in diffs)
                   (princ (if (eq op :=) #\Space op) out)
-                  (iter (for c :in-string x) (write-char-urlencode c out))
-                  (terpri out))))))
+                  (write-line-urlencode x out))))))
+
+(defun write-lines-patch (patch &optional (out *standard-output*))
+  "Write the formatted representation of the given PATCH (a hunk or list of
+   hunks, encoding a difference of line sequences) to the stream OUT."
+  (etypecase patch
+    (list (mapc (lambda (hunk) (write-lines-patch hunk out)) patch))
+    (hunk (with-slots (diffs) patch
+            (when (not (eq (nth-value 1 (diff-seq-type diffs)) 'string))
+              (error "Non-line-sequence patch in WRITE-LINES-PATCH"))
+            (format-hunk-header patch out)
+            (iter (for (op x) :in diffs)
+                  (let ((leader (if (eq op :=) #\Space op)))
+                    (iter (for s :in-sequence x)
+                          (princ leader out)
+                          (write-line-urlencode s out))))))))
+
+(let ((header-re
+        (ppcre:create-scanner
+          "@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@")))
+  (defun parse-hunk-header (in)
+    (dlet* ((header (read-line in nil))
+            ((values ok g) (ppcre:scan-to-strings header-re header)))
+      (if ok
+          (flet ((int (i) (if #1=(aref g i) (parse-integer #1#) 1)))
+            (let* ((la (int 1))
+                   (a0 (if (zerop la) (int 0) (1- (int 0))))
+                   (lb (int 3))
+                   (b0 (if (zerop lb) (int 2) (1- (int 2)))))
+              (make-instance 'hunk
+                :start-a a0 :length-a la :start-b b0 :length-b lb)))
+          (error "Invalid hunk header: ~A" header)))))
 
 (defun read-chars-patch (&optional (in *standard-input*))
   "Read a formatted representation of patch encoding a difference of
    character strings from the stream IN and return it as a list of hunks."
   (iter (for c0 := (peek-char nil in nil))
         (with hunk := nil) (with diffs := '()) (with op)
-        (with header-re :=
-          (ppcre:create-scanner
-            "@@ -(\\d+)(?:,(\\d+))? \\+(\\d+)(?:,(\\d+))? @@"))
-        (if (and (or (not c0) (char= c0 #\@)) hunk)
-            (if (iter (for (op) :in diffs) (thereis (member op '(:+ :-))))
-                (progn (setf (hunk-diffs hunk) (nreverse diffs)
-                             diffs '())
-                       (collect hunk))
-                (error "Empty diffs")))
+        (when (and (or (not c0) (char= c0 #\@)) hunk)
+          (if (iter (for (op) :in diffs) (thereis (member op '(:+ :-))))
+              (progn (setf (hunk-diffs hunk) (nreverse diffs)
+                           diffs '())
+                     (collect hunk))
+              (error "Empty diffs")))
         (while c0)
         (cond
           ((char= c0 #\@)
-           (dlet* ((header (read-line in nil))
-                   ((values ok g) (ppcre:scan-to-strings header-re header)))
-             (if ok
-                 (flet ((int (i) (if #1=(aref g i) (parse-integer #1#) 1)))
-                   (let* ((la (int 1))
-                          (a0 (if (zerop la) (int 0) (1- (int 0))))
-                          (lb (int 3))
-                          (b0 (if (zerop lb) (int 2) (1- (int 2)))))
-                     (setq hunk (make-instance 'hunk
-                                  :start-a a0 :length-a la
-                                  :start-b b0 :length-b lb))))
-                 (error "Invalid hunk header: ~A" header))))
+           (setq hunk (parse-hunk-header in)))
           ((setq op (case c0 (#\+ :+) (#\- :-) (#\Space :=)))
-           (let ((x (iter (initially (read-char in))
-                          (with near-end := nil)
-                          (for c := (peek-char nil in nil))
-                          (cond
-                            ((newline-char-p c)
-                             (setq near-end (read-char in)))
-                            ((or (not c) near-end)
-                             (finish))
-                            (t (collect (read-char-urldecode in)
-                                 :result-type 'string))))))
-             (push `(,op ,x) diffs)))
+           (read-char in)
+           (push `(,op ,(read-line-urldecode in)) diffs))
+          (t (error "Invalid diff line: ~A" (read-line in nil))))))
+
+(defun read-lines-patch (&optional (in *standard-input*) (seq-type 'vector))
+  "Read a formatted representation of patch encoding a difference of
+   line sequences from the stream IN and return it as a list of hunks."
+  (iter (for c0 := (peek-char nil in nil))
+        (with hunk := nil) (with diffs := '()) (with op)
+        (with leader := #\ ) (with leader-op := nil) (with lines := '())
+        (when (and (or (not c0) (char/= c0 leader)) lines)
+          (push (list leader-op (coerce (nreverse lines) seq-type)) diffs)
+          (setq lines '()))
+        (when (and (or (not c0) (char= c0 #\@)) hunk)
+          (if (iter (for (op) :in diffs) (thereis (member op '(:+ :-))))
+              (progn (setf (hunk-diffs hunk) (nreverse diffs)
+                           diffs '())
+                     (collect hunk))
+              (error "Empty diffs")))
+        (while c0)
+        (cond
+          ((char= c0 #\@)
+           (setq hunk (parse-hunk-header in)))
+          ((setq op (case c0 (#\+ :+) (#\- :-) (#\Space :=)))
+           (read-char in)
+           (setq leader c0 leader-op op)
+           (push (read-line-urldecode in) lines))
           (t (error "Invalid diff line: ~A" (read-line in nil))))))
 
 (defun trivial-padding (patch length)
