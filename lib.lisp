@@ -171,9 +171,8 @@
           (write-char (hexc i) out)
           (write-char (hexc j) out)))))
 
-(defun write-line-urlencode (line out)
-  (iter (for c :in-string line) (write-char-urlencode c out)
-        (finally (terpri out))))
+(defun write-string-urlencode (string out)
+  (iter (for c :in-string string) (write-char-urlencode c out)))
 
 (defun read-char-urldecode (in)
   (flet ((read-hex ()

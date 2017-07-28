@@ -159,33 +159,51 @@
             #1#
             (list length-b start-b (1+ start-b)))))
 
-(defun write-chars-patch (patch &optional (out *standard-output*))
+(defun write-chars-patch (patch &optional (out *standard-output*) color)
   "Write the formatted representation of the given PATCH (a hunk or list of
-   hunks, encoding a difference of character strings) to the stream OUT."
+   hunks, encoding a difference of character strings) to the stream OUT.
+   If COLOR is set, differences will be marked with ANSI color codes."
   (etypecase patch
-    (list (mapc (lambda (hunk) (write-chars-patch hunk out)) patch))
+    (list (mapc (lambda (hunk) (write-chars-patch hunk out color)) patch))
     (hunk (with-slots (diffs) patch
             (when (not (eq (diff-seq-type diffs) 'string))
               (error "Non-string patch in WRITE-CHARS-PATCH"))
             (format-hunk-header patch out)
             (iter (for (op x) :in diffs)
+                  (when color
+                    (case op
+                      (:+ (write-string #.(cl-ansi-text:make-color-string :green) out))
+                      (:- (write-string #.(cl-ansi-text:make-color-string :red) out))))
                   (princ (if (eq op :=) #\Space op) out)
-                  (write-line-urlencode x out))))))
+                  (write-string-urlencode x out)
+                  (when color
+                    (write-string #.cl-ansi-text:+reset-color-string+ out))
+                  (terpri))))))
 
-(defun write-lines-patch (patch &optional (out *standard-output*))
+(defun write-lines-patch (patch &optional (out *standard-output*) color)
   "Write the formatted representation of the given PATCH (a hunk or list of
-   hunks, encoding a difference of line sequences) to the stream OUT."
+   hunks, encoding a difference of line sequences) to the stream OUT.
+   If COLOR is set, differences will be marked with ANSI color codes."
   (etypecase patch
-    (list (mapc (lambda (hunk) (write-lines-patch hunk out)) patch))
+    (list (mapc (lambda (hunk) (write-lines-patch hunk out color)) patch))
     (hunk (with-slots (diffs) patch
             (when (not (eq (nth-value 1 (diff-seq-type diffs)) 'string))
               (error "Non-line-sequence patch in WRITE-LINES-PATCH"))
             (format-hunk-header patch out)
             (iter (for (op x) :in diffs)
-                  (let ((leader (if (eq op :=) #\Space op)))
-                    (iter (for s :in-sequence x)
-                          (princ leader out)
-                          (write-line-urlencode s out))))))))
+                  (flet ((out ()
+                           (let ((leader (if (eq op :=) #\Space op)))
+                             (iter (for s :in-sequence x)
+                               (princ leader out)
+                               (write-string-urlencode s out)))))
+                    (when color
+                      (case op
+                        (:+ (write-string #.(cl-ansi-text:make-color-string :green) out))
+                        (:- (write-string #.(cl-ansi-text:make-color-string :red) out))))
+                    (out)
+                    (when color
+                      (write-string #.cl-ansi-text:+reset-color-string+ out))
+                    (terpri)))))))
 
 (let ((header-re
         (ppcre:create-scanner
