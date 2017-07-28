@@ -11,7 +11,7 @@
   :author "Neil Fraser; ported by Boris Smilga"
   :maintainer "Boris Smilga <boris.smilga@gmail.com>"
   :license "Apache 2.0"
-  :depends-on (#:iterate #:cl-ppcre)
+  :depends-on (#:iterate #:cl-ppcre #:cl-ansi-text)
   :components
     ((:module #:src
         :serial t
@@ -22,7 +22,8 @@
            (:file "diff")
            (:file "cleanup")
            (:file "match")
-           (:file "patch")))))
+           (:file "patch")
+           (:file "print")))))
 
 (defsystem #:diff-match-patch.test
   :name "Diff/Match/Patch tests"

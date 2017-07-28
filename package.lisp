@@ -33,7 +33,9 @@
            #:hunk-length-a #:hunk-length-b
            #:make-patch #:apply-patch
            #:write-chars-patch #:read-chars-patch
-           #:write-lines-patch #:read-lines-patch))
+           #:write-lines-patch #:read-lines-patch
+           ;; print.lisp
+           #:print-diff))
 
 ;;;; Global parameters ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
