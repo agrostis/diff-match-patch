@@ -22,9 +22,10 @@
            (:file "diff")
            (:file "cleanup")
            (:file "match")
-           (:file "patch")))))
+           (:file "patch"))))
+  :in-order-to ((test-op (load-op #:diff-match-patch/test))))
 
-(defsystem #:diff-match-patch.test
+(defsystem #:diff-match-patch/test
   :name "Diff/Match/Patch tests"
   :version "0.2.1"
   :author "Neil Fraser; ported by Boris Smilga"
@@ -40,5 +41,4 @@
 
 (defmethod perform ((op test-op)
                     (system (eql (find-system '#:diff-match-patch))))
-  (load-system '#:diff-match-patch.test)
   (funcall (find-symbol* '#:run-all '#:dmp-test)))
