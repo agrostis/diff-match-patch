@@ -412,7 +412,8 @@
                         (setq applicable nil)
                         (iter (with diffs** :=
                                 (if (eq (diff-seq-type diffs*) 'string)
-                                    (cleanup-semantic.shift-lossless diffs*)
+                                    (cleanup-semantic.shift-lossless
+                                      diffs* test)
                                     diffs*))
                               (with translate :=
                                 (lambda (pos)
