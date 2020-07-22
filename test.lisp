@@ -283,6 +283,7 @@
                   (t1 (dmp::get-internal-seconds)))
              (values (- t1 t0) d))))
     (let ((dmp:*diff-timeout* 0.1)
+          (dmp:*diff-check-lines-length* nil)
           (a (str-expn
                #?"`Twas brillig, and the slithy toves\n\
                   Did gyre and gimble in the wabe:\n\
