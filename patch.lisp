@@ -448,5 +448,6 @@
               (collect applicable :into applied)
               (finally
                 (return
-                  (values (narrow seq* pad-length (- pad-length))
+                  (values (coerce (narrow seq* pad-length (- pad-length))
+                                  (seq-type seq))
                           applied)))))))
