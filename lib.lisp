@@ -47,7 +47,7 @@
                 ((stringp x) 'string)
                 ((vectorp x) 'vector)
                 (t (error "Not a sequence")))
-          (if (not (null x))
+          (if (if (listp x) (not (null x)) (plusp (length x)))
               (let ((x0 (elt x 0)))
                 (if (typep x0 'sequence)
                     (seq-type x0)
